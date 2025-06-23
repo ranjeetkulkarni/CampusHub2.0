@@ -2,7 +2,7 @@ import os
 
 # Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'lostnfound.db')
+DB_PATH  = os.environ.get('DB_PATH', '/tmp/lostnfound.db')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'images')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'samyacheat')
@@ -21,7 +21,7 @@ QUALITY = 85
 
 # Session configuration
 SESSION_TYPE = 'filesystem'
-SESSION_FILE_DIR = os.path.join(BASE_DIR, 'flask_session')
+SESSION_FILE_DIR = os.environ.get('SESSION_FILE_DIR', '/tmp/flask_session')
 SESSION_PERMANENT = False
 
 def allowed_file(filename):

@@ -7,20 +7,38 @@ from werkzeug.utils import secure_filename
 from PIL import Image, ImageStat
 import logging
 
-# Import configuration
-from config import SECRET_KEY, UPLOAD_FOLDER, DB_PATH, ALLOWED_EXTENSIONS, MAX_IMAGE_SIZE, QUALITY, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_USE_TLS, MAIL_USE_SSL, SESSION_TYPE, SESSION_FILE_DIR, SESSION_PERMANENT
+# Import configuration (no more UPLOAD_FOLDER here)
+from config import (
+    SECRET_KEY,
+    DB_PATH,
+    ALLOWED_EXTENSIONS,
+    MAX_IMAGE_SIZE,
+    QUALITY,
+    MAIL_SERVER,
+    MAIL_PORT,
+    MAIL_USERNAME,
+    MAIL_PASSWORD,
+    MAIL_USE_TLS,
+    MAIL_USE_SSL,
+    SESSION_TYPE,
+    SESSION_FILE_DIR,
+    SESSION_PERMANENT,
+)
 
-# Import models
-import models
+# ── EDIT #1: Ensure the /tmp directory for your SQLite DB exists
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
-# Configuration
-logging.basicConfig(level=logging.DEBUG)
-
+# Create the Flask app
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# ── EDIT #2: Use a writable uploads folder under /tmp
+upload_dir = os.environ.get('UPLOAD_FOLDER', '/tmp/uploads')
+os.makedirs(upload_dir, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = upload_dir
+
+# Original config continues...
 app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=7)
-# Mail configuration
 app.config.update(
     MAIL_SERVER=MAIL_SERVER,
     MAIL_PORT=MAIL_PORT,
@@ -29,6 +47,9 @@ app.config.update(
     MAIL_USE_TLS=MAIL_USE_TLS,
     MAIL_USE_SSL=MAIL_USE_SSL
 )
+
+# …rest of your Main.py…
+
 # Initialize Flask-Mail via extensions
 from extensions import mail
 mail.init_app(app)
