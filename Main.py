@@ -84,6 +84,17 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(lost_and_found_bp)
 app.register_blueprint(marketplace_bp)
 
+# Ensure DB schema exists on cold start (for serverless)
+@app.before_first_request
+def init_db_if_needed():
+    if not os.path.exists(DB_PATH):
+        try:
+            from reset_db import create_schema
+            create_schema()
+            print("✅ DB initialized in /tmp")
+        except Exception as e:
+            print(f"❌ DB init error: {e}")
+
 @app.route('/')
 def index():
     """Redirect to the most appropriate page based on login status"""

@@ -2,6 +2,14 @@ import os
 import models
 from config import DB_PATH
 
+def create_schema():
+    """Create the database schema if it doesn't exist."""
+    if not os.path.exists(DB_PATH):
+        models.init_db()
+        print(f"✅ DB schema created at {DB_PATH}")
+    else:
+        print(f"DB already exists at {DB_PATH}")
+
 def reset_database():
     print("Resetting database...")
     

@@ -3,7 +3,7 @@ import os
 # Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH  = os.environ.get('DB_PATH', '/tmp/lostnfound.db')
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'images')
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/tmp/uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'samyacheat')
 
@@ -23,6 +23,9 @@ QUALITY = 85
 SESSION_TYPE = 'filesystem'
 SESSION_FILE_DIR = os.environ.get('SESSION_FILE_DIR', '/tmp/flask_session')
 SESSION_PERMANENT = False
+
+# Ensure session directory exists at import time (for serverless cold starts)
+os.makedirs(SESSION_FILE_DIR, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
