@@ -1,0 +1,6 @@
+flask
+flask-login
+flask-session
+flask-mail
+pillow
+werkzeug

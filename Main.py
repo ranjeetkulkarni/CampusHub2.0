@@ -88,12 +88,3 @@ def page_not_found(e):
 @app.errorhandler(500)
 def server_error(e):
     return render_template('500.html'), 500
-
-if __name__ == '__main__':
-    # Ensure database is initialized
-    models.init_db()
-    
-    # Create upload folder if it doesn't exist
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    
-    app.run(debug=True)
