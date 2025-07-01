@@ -171,7 +171,13 @@
   </div>
   <div class="detail-content">
     <div class="detail-image">
-      <img src="{{ url_for('static', filename=item.image_path[1:]) if item.image_path else 'https://dummyimage.com/600x400/cccccc/000000.png&text=No+Image' }}" alt="{{ item.name }}">
+      {% if item.images and item.images|length > 0 %}
+        {% for image in item.images %}
+          <img src="{{ image.image_url }}" alt="{{ item.name }}">
+        {% endfor %}
+      {% else %}
+        <img src="https://dummyimage.com/600x400/cccccc/000000.png&text=No+Image" alt="No Image">
+      {% endif %}
     </div>
     <div class="detail-info">
       <div class="description">

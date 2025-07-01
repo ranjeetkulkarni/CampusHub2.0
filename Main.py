@@ -1,20 +1,12 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, make_response
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from datetime import datetime, timedelta
-import sqlite3
-import os
-from werkzeug.utils import secure_filename
-from PIL import Image, ImageStat
 import logging
 import models
 
-# Import configuration (no more UPLOAD_FOLDER here)
+# Import configuration
 from config import (
     SECRET_KEY,
-    DB_PATH,
-    ALLOWED_EXTENSIONS,
-    MAX_IMAGE_SIZE,
-    QUALITY,
     MAIL_SERVER,
     MAIL_PORT,
     MAIL_USERNAME,
@@ -26,17 +18,23 @@ from config import (
     SESSION_PERMANENT,
 )
 
-# ── EDIT #1: Ensure the /tmp directory for your SQLite DB exists
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-
 # Create the Flask app
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 
-# ── EDIT #2: Use a writable uploads folder under /tmp
-upload_dir = os.environ.get('UPLOAD_FOLDER', '/tmp/uploads')
-os.makedirs(upload_dir, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = upload_dir
+# Log app startup
+logging.basicConfig(level=logging.INFO)
+logging.info('Campus Hub Flask app starting up...')
+
+# Optional: Check DB connection at startup
+try:
+    from sqlalchemy import text
+    db = models.SessionLocal()
+    db.execute(text('SELECT 1'))
+    db.close()
+    logging.info('Database connection successful.')
+except Exception as e:
+    logging.error(f'Database connection failed: {e}')
 
 # Original config continues...
 app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=7)
@@ -48,8 +46,6 @@ app.config.update(
     MAIL_USE_TLS=MAIL_USE_TLS,
     MAIL_USE_SSL=MAIL_USE_SSL
 )
-
-# …rest of your Main.py…
 
 # Initialize Flask-Mail via extensions
 from extensions import mail
@@ -65,14 +61,16 @@ sess = Session()
 app.config['SESSION_TYPE'] = SESSION_TYPE
 app.config['SESSION_FILE_DIR'] = SESSION_FILE_DIR
 app.config['SESSION_PERMANENT'] = SESSION_PERMANENT
-os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+# NOTE: For production, set SESSION_COOKIE_SECURE = True and use HTTPS
 sess.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    user = models.get_user_by_id(user_id)
+    db = models.SessionLocal()
+    user = db.query(models.User).filter_by(id=user_id).first()
+    db.close()
     if user:
-        return models.User(user['id'])
+        return user
     return None
 
 # Import blueprints after app creation to avoid circular imports
@@ -85,14 +83,6 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(lost_and_found_bp)
 app.register_blueprint(marketplace_bp)
 
-# Ensure DB schema exists on cold start (for serverless)
-try:
-    from reset_db import create_schema
-    create_schema()
-    print("✅ DB initialized in /tmp")
-except Exception as e:
-    print(f"❌ DB init error: {e}")
-
 @app.route('/')
 def index():
     """Redirect to the most appropriate page based on login status"""
@@ -104,7 +94,9 @@ def index():
 @app.context_processor
 def inject_user_info():
     if current_user.is_authenticated:
-        user = models.get_user_by_id(current_user.id)
+        db = models.SessionLocal()
+        user = db.query(models.User).filter_by(id=current_user.id).first()
+        db.close()
         if user:
             return {'get_user_info': lambda: user}
     return {'get_user_info': lambda: None}
@@ -118,3 +110,11 @@ def page_not_found(e):
 @app.errorhandler(500)
 def server_error(e):
     return render_template('500.html'), 500
+
+@app.route('/test_supabase')
+def test_supabase():
+    from models import test_supabase_connection
+    return str(test_supabase_connection())
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000, debug=True)

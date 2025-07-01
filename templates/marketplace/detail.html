@@ -156,13 +156,15 @@
     
     <div class="row item-container">
         <div class="col-md-6 p-3">
-            {% if item.image_path %}
-                <img src="{{ url_for('static', filename=item.image_path[1:]) }}" class="item-image" alt="{{ item.name }}">
-            {% else %}
-                <div class="item-image d-flex align-items-center justify-content-center bg-light">
-                    <span class="text-muted">No image available</span>
-                </div>
-            {% endif %}
+            <div class="item-image">
+              {% if item.images and item.images|length > 0 %}
+                {% for image in item.images %}
+                  <img src="{{ image.image_url }}" class="item-image" alt="{{ item.name }}">
+                {% endfor %}
+              {% else %}
+                <img src="https://dummyimage.com/600x400/cccccc/000000.png&text=No+Image" class="item-image" alt="No Image">
+              {% endif %}
+            </div>
         </div>
         <div class="col-md-6 item-details">
             <div class="badge badge-item {{ 'badge-available' if item.status == 'available' else 'badge-sold' }}">

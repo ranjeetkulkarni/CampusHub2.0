@@ -1,9 +1,18 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH  = os.environ.get('DB_PATH', '/tmp/lostnfound.db')
-UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/tmp/uploads')
+DB_PATH  = os.environ.get('DB_PATH', '/tmp/lostnfound.db')  # legacy, not used with Supabase
+POSTGRES_URI = os.environ.get('SUPABASE_DB_URL') or os.environ.get('POSTGRES_URI')
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+SUPABASE_LOSTFOUND_BUCKET = os.environ.get('SUPABASE_LOSTFOUND_BUCKET', 'lostfound-images')
+SUPABASE_MARKETPLACE_BUCKET = os.environ.get('SUPABASE_MARKETPLACE_BUCKET', 'marketplace-images')
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', '/tmp/uploads')  # legacy, not used with Supabase
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'samyacheat')
 

@@ -1,16 +1,15 @@
-# Campus Hub
+# Campus Hub 2.0
 
-Campus Hub is a full-featured web application for campus communities, built with **Flask** and **SQLite**. It provides two main platforms:
+Campus Hub 2.0 is a modern, production-ready web application for campus communities, built with Flask, SQLAlchemy ORM, and Supabase (PostgreSQL for data, Supabase Storage for images). It provides two main platforms:
 
 - **Lost & Found:** Report, search, and manage lost or found items.
 - **Marketplace:** Post, browse, and manage items for sale or rent.
 
-The project includes user authentication, email verification, image uploads, feedback/comments, and admin utilities.
+The project includes user authentication, email verification, image uploads to Supabase Storage, feedback/comments, and admin utilities. All legacy SQLite, PIL, and local file upload logic have been removed for a fully cloud-native experience.
 
 ---
 
 ## Table of Contents
-
 - [Features](#features)
 - [Project Structure](#project-structure)
 - [Setup Instructions](#setup-instructions)
@@ -20,6 +19,7 @@ The project includes user authentication, email verification, image uploads, fee
 - [Usage Guide](#usage-guide)
 - [Security & Best Practices](#security--best-practices)
 - [Extending the App](#extending-the-app)
+- [Dockerization & Deployment](#dockerization--deployment)
 - [License](#license)
 
 ---
@@ -27,47 +27,46 @@ The project includes user authentication, email verification, image uploads, fee
 ## Features
 
 ### User Management
-- **Registration & Login:** Secure registration and login with SHA-256-hashed passwords.
+- **Registration & Login:** Secure registration and login with hashed passwords (Werkzeug).
 - **Email Verification:** Users must verify their email via Flask-Mail before accessing both platforms.
-- **Roles:** Supports `admin`, `student`, and `guest` roles.
+- **Roles:** Supports admin, student, and guest roles.
 - **Session Management:** Persistent sessions using Flask-Session.
 
 ### Lost & Found Platform
-- **Add Lost/Found Items:** Users can report lost or found items with details, images, and location.
+- **Add Lost/Found Items:** Users can report lost or found items with details, images (stored in Supabase), and location.
 - **Browse & Search:** Filter and sort items by category, status, and priority.
 - **Feedback/Comments:** Users can comment on items for more information.
 
 ### Marketplace Platform
-- **Post for Sale/Rent:** Users can list items for sale or rent with price, description, and images.
+- **Post for Sale/Rent:** Users can list items for sale or rent with price, description, and images (stored in Supabase).
 - **Browse & Search:** Filter and sort marketplace items by category, price, or condition.
 - **Feedback/Comments:** Users can comment on marketplace items to inquire or negotiate.
 
 ### Admin Utilities
-- **Database Reset Script:** `reset_db.py` to reset and initialize the database with default users, categories, and sample data.
-- **Default Admin Account:** Pre-configured `admin/admin123` for management and testing.
+- **Category Management:** Script to initialize default categories.
+- **Default Admin Account:** Pre-configured admin/admin123 for management and testing.
 
 ### Image Handling
-- **Upload & Resize:** Images are uploaded, resized, and compressed for efficiency.
+- **Upload to Supabase Storage:** Images are uploaded directly to Supabase Storage buckets.
 - **Allowed Formats:** PNG, JPG, JPEG, WEBP.
-- **Image Validation:** `allowed_file()` utility to check file extensions.
+- **Image Validation:** Only valid image types are accepted.
 
 ---
 
 ## Project Structure
 
 ```
-Campus-Hub/
+Campus-Hub-2.0/
 ├── Main.py                # Main Flask application entry point
-├── config.py              # Configuration settings (database, mail, sessions, etc.)
-├── models.py              # Database models and core functionality
-├── reset_db.py            # Script to reset/initialize the database
+├── config.py              # Configuration settings (Supabase, mail, sessions, etc.)
+├── models.py              # SQLAlchemy ORM models and core logic
 ├── extensions.py          # Flask extensions (e.g., mail)
 ├── blueprints/            # Flask blueprints for modular routes
 │   ├── auth/
 │   ├── lost_and_found/
 │   └── marketplace/
 ├── static/
-│   └── images/            # Directory for uploaded user images
+│   └── images/            # (Legacy, not used; images now in Supabase)
 ├── templates/             # HTML templates (Jinja2)
 │   ├── base.html
 │   ├── 404.html, 500.html
@@ -75,189 +74,153 @@ Campus-Hub/
 │   ├── lost_and_found/
 │   └── marketplace/
 ├── flask_session/         # Session files (auto-generated)
-└── lostnfound.db          # SQLite database file
+├── lostnfound.db          # (Legacy, not used)
+├── requirements.txt       # Python dependencies
+├── .env                   # Environment variables (Supabase, DB, mail, secret)
+└── init_categories.py     # Script to initialize default categories
 ```
 
 ---
 
 ## Setup Instructions
 
-1. **Clone the Repository**
+### 1. Clone the Repository
+```sh
+git clone <your-repo-url>
+cd Campus-Hub-2.0
+```
 
-   ```powershell
-   git clone <your-repo-url>
-   cd Campus-Hub
-   ```
+### 2. Create & Activate a Virtual Environment (Recommended)
+```sh
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Mac/Linux:
+source venv/bin/activate
+```
 
-2. **Create & Activate a Virtual Environment (Recommended)**
+### 3. Install Dependencies
+```sh
+pip install -r requirements.txt
+```
 
-   ```powershell
-   python -m venv venv
-   .\venv\Scripts\activate
-   ```
+### 4. Configuration
+- Copy `.env.example` to `.env` and fill in your Supabase/PostgreSQL, Supabase Storage, and mail credentials.
+- Edit `config.py` if you need to override any settings.
 
-3. **Install Dependencies**
+### 5. Initialize Categories (Optional, recommended for first run)
+```sh
+python init_categories.py
+```
 
-   ```powershell
-   pip install flask flask-login flask-session flask-mail pillow
-   ```
-
-4. **Configuration**
-
-   Open `config.py` and update the following as needed:
-   - `DB_PATH` (default: lostnfound.db)
-   - `MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_USE_TLS`, `MAIL_USE_SSL`
-   - `SECRET_KEY` (change for production)
-   - `UPLOAD_FOLDER`, `ALLOWED_EXTENSIONS`, `MAX_IMAGE_SIZE`, `QUALITY`
-   - `SESSION_TYPE`, `SESSION_FILE_DIR`, `SESSION_PERMANENT`
-
-5. **Initialize the Database**
-
-   ```powershell
-   python reset_db.py
-   ```
-   This script will:
-   - Create all tables (`user`, `lost_found_item`, `marketplace_item`, `category`, `feedback`)
-   - Insert default users (`admin/admin123`, `temp/temp123`)
-   - Insert default categories for both "lost_found" and "marketplace"
-
-6. **Run the Application**
-
-   ```powershell
-   python Main.py
-   ```
-   Open your browser and navigate to:
-   [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+### 6. Run the Application
+```sh
+python Main.py
+```
+- Open your browser and navigate to: http://127.0.0.1:5000/
 
 ---
 
 ## Configuration
+All configuration values are managed in `.env` and `config.py`. Key settings include:
 
-All configuration values are managed in `config.py`. Below is a quick overview:
-
-| Key                | Description                                                      |
-|--------------------|------------------------------------------------------------------|
-| DB_PATH            | Path to the SQLite database file (e.g., lostnfound.db).           |
-| UPLOAD_FOLDER      | Directory where uploaded images will be stored (static/images).   |
-| ALLOWED_EXTENSIONS | Set of allowed image extensions (e.g., {'png','jpg','jpeg','webp'}). |
-| MAX_IMAGE_SIZE     | Maximum size (in pixels) for uploaded images.                    |
-| QUALITY            | Compression quality for resized images (0–100).                  |
-| MAIL_SERVER        | SMTP server address (e.g., smtp.gmail.com).                      |
-| MAIL_PORT          | SMTP port (e.g., 587 for TLS).                                   |
-| MAIL_USERNAME      | Email address used for sending verification emails.              |
-| MAIL_PASSWORD      | Password or app-specific password for the mail account.          |
-| MAIL_USE_TLS       | True to enable TLS encryption.                                   |
-| MAIL_USE_SSL       | True to enable SSL encryption.                                   |
-| SESSION_TYPE       | Session type (e.g., filesystem).                                 |
-| SESSION_FILE_DIR   | Directory where session files will be stored.                    |
-| SESSION_PERMANENT  | True if sessions should be permanent.                            |
-| SECRET_KEY         | Flask secret key (change to a random value for production).      |
+| Key                      | Description                                      |
+|--------------------------|--------------------------------------------------|
+| POSTGRES_URI             | PostgreSQL connection string (Supabase)          |
+| SUPABASE_URL             | Supabase project URL                             |
+| SUPABASE_KEY             | Supabase service key                             |
+| SUPABASE_LOSTFOUND_BUCKET| Supabase Storage bucket for lost/found images    |
+| SUPABASE_MARKETPLACE_BUCKET| Supabase Storage bucket for marketplace images |
+| MAIL_SERVER, MAIL_PORT   | SMTP server and port                             |
+| MAIL_USERNAME, MAIL_PASSWORD | Email credentials for Flask-Mail           |
+| SECRET_KEY               | Flask secret key (change for production)         |
+| SESSION_TYPE, SESSION_FILE_DIR, SESSION_PERMANENT | Flask-Session settings |
 
 ---
 
-## Database Schema
+## Database Schema (PostgreSQL via SQLAlchemy ORM)
 
 ### Tables & Fields
 
 #### 1. user
-| Column      | Type     | Description                                 |
-|-------------|----------|---------------------------------------------|
-| id          | INTEGER  | Primary key (auto-increment).               |
-| username    | TEXT     | Unique username.                            |
-| password    | TEXT     | SHA-256 hashed password.                    |
-| email       | TEXT     | Unique user email.                          |
-| role        | TEXT     | User role (admin, student, guest).          |
-| created_at  | DATETIME | Timestamp of registration.                  |
-| is_admin    | BOOLEAN  | True if user is an admin.                   |
-| is_confirmed| BOOLEAN  | True if email is verified.                  |
+| Column      | Type      | Description                        |
+|-------------|-----------|------------------------------------|
+| id          | INTEGER   | Primary key                        |
+| username    | TEXT      | Unique username                    |
+| password    | TEXT      | Hashed password                    |
+| email       | TEXT      | Unique user email                  |
+| role        | TEXT      | User role (admin, student, guest)  |
+| created_at  | DATETIME  | Timestamp of registration          |
+| is_admin    | BOOLEAN   | True if user is an admin           |
+| is_confirmed| BOOLEAN   | True if email is verified          |
 
 #### 2. lost_found_item
-| Column       | Type     | Description                                 |
-|--------------|----------|---------------------------------------------|
-| id           | INTEGER  | Primary key (auto-increment).               |
-| name         | TEXT     | Name/title of the item.                     |
-| description  | TEXT     | Detailed description.                       |
-| category     | TEXT     | Category name (foreign key to category).    |
-| status       | TEXT     | "lost" or "found".                        |
-| priority     | INTEGER  | Priority level (e.g., 1=High, 2=Medium, 3=Low). |
-| image_path   | TEXT     | File path of uploaded image.                |
-| date         | DATE     | Date when reported.                         |
-| location     | TEXT     | Location details.                           |
-| contact_info | TEXT     | Contact details of reporter/finder.         |
-| latitude     | REAL     | Latitude coordinate (optional).             |
-| longitude    | REAL     | Longitude coordinate (optional).            |
-| user_id      | INTEGER  | Foreign key to user.id.                     |
-| found_by     | INTEGER  | User ID who found the item (nullable).      |
-| claimed_by   | INTEGER  | User ID who claimed the item (nullable).    |
+| Column      | Type      | Description                        |
+|-------------|-----------|------------------------------------|
+| id          | INTEGER   | Primary key                        |
+| name        | TEXT      | Name/title of the item             |
+| description | TEXT      | Detailed description               |
+| category    | TEXT      | Category name                      |
+| status      | TEXT      | "lost" or "found"                  |
+| priority    | INTEGER   | Priority level                     |
+| date        | DATE      | Date when reported                 |
+| location    | TEXT      | Location details                   |
+| contact_info| TEXT      | Contact details                    |
+| latitude    | REAL      | Latitude coordinate (optional)     |
+| longitude   | REAL      | Longitude coordinate (optional)    |
+| user_id     | INTEGER   | Foreign key to user.id             |
+| found_by    | INTEGER   | User ID who found the item         |
+| claimed_by  | INTEGER   | User ID who claimed the item       |
+| is_deleted  | BOOLEAN   | Soft delete flag                   |
 
 #### 3. marketplace_item
-| Column       | Type     | Description                                 |
-|--------------|----------|---------------------------------------------|
-| id           | INTEGER  | Primary key (auto-increment).               |
-| name         | TEXT     | Name/title of the item.                     |
-| description  | TEXT     | Detailed description.                       |
-| price        | REAL     | Price of the item.                          |
-| category     | TEXT     | Category name (foreign key to category).    |
-| condition    | TEXT     | Condition (e.g., "New," "Used").         |
-| status       | TEXT     | "available," "sold," or "rented."        |
-| image_path   | TEXT     | File path of uploaded image.                |
-| date         | DATE     | Date when posted.                           |
-| location     | TEXT     | Location details.                           |
-| contact_info | TEXT     | Contact details of seller.                  |
-| user_id      | INTEGER  | Foreign key to user.id.                     |
+| Column      | Type      | Description                        |
+|-------------|-----------|------------------------------------|
+| id          | INTEGER   | Primary key                        |
+| name        | TEXT      | Name/title of the item             |
+| description | TEXT      | Detailed description               |
+| price       | NUMERIC   | Price of the item                  |
+| category    | TEXT      | Category name                      |
+| condition   | TEXT      | Condition (e.g., "New", "Used")    |
+| status      | TEXT      | "available", "sold", or "rented"    |
+| date        | DATE      | Date when posted                   |
+| location    | TEXT      | Location details                   |
+| contact_info| TEXT      | Contact details of seller          |
+| user_id     | INTEGER   | Foreign key to user.id             |
+| is_deleted  | BOOLEAN   | Soft delete flag                   |
 
 #### 4. category
-| Column | Type    | Description                                   |
-|--------|---------|-----------------------------------------------|
-| id     | INTEGER | Primary key (auto-increment).                 |
-| name   | TEXT    | Category name (e.g., "Electronics," "Books").|
-| type   | TEXT    | Either lost_found or marketplace.             |
+| Column      | Type      | Description                        |
+|-------------|-----------|------------------------------------|
+| id          | INTEGER   | Primary key                        |
+| name        | TEXT      | Category name                      |
+| type        | TEXT      | Either lost_found or marketplace   |
+| description | TEXT      | Category description (optional)    |
 
-#### 5. feedback
-| Column    | Type     | Description                                 |
-|-----------|----------|---------------------------------------------|
-| id        | INTEGER  | Primary key (auto-increment).               |
-| user_id   | INTEGER  | Foreign key to user.id.                     |
-| item_type | TEXT     | Either lost_found or marketplace.           |
-| item_id   | INTEGER  | ID of the associated item in its table.     |
-| comment   | TEXT     | User’s feedback or comment.                 |
-| date      | DATETIME | Timestamp when comment was posted.          |
+#### 5. item_image
+| Column      | Type      | Description                        |
+|-------------|-----------|------------------------------------|
+| id          | INTEGER   | Primary key                        |
+| item_type   | TEXT      | 'lost_found' or 'marketplace'      |
+| item_id     | INTEGER   | ID of the associated item          |
+| image_url   | TEXT      | Public URL in Supabase Storage     |
+| uploaded_at | DATETIME  | Timestamp of upload                |
+
+#### 6. feedback
+| Column      | Type      | Description                        |
+|-------------|-----------|------------------------------------|
+| id          | INTEGER   | Primary key                        |
+| user_id     | INTEGER   | Foreign key to user.id             |
+| item_type   | TEXT      | Either lost_found or marketplace   |
+| item_id     | INTEGER   | ID of the associated item          |
+| comment     | TEXT      | User’s feedback or comment         |
+| rating      | INTEGER   | Optional rating                    |
+| date        | DATETIME  | Timestamp when comment was posted  |
 
 ---
 
 ## Core Functionality
-
-All database operations and core logic are implemented in `models.py`.
-
-### User Functions
-- `create_user(username, email, password)`: Register a new user (password is hashed).
-- `verify_user(username, password)`: Authenticate user credentials.
-- `get_user_by_id(id)`, `get_user_by_username(username)`, `get_user_by_email(email)`: Retrieve user information.
-- `confirm_user(user_id)`: Mark a user’s email as verified.
-
-### Lost & Found Functions
-- `create_lost_found_item(item_data)`: Add a new lost/found item.
-- `get_lost_found_items(order_by=None, filters=None)`: List items with optional filters and sorting.
-- `get_lost_found_item(item_id)`: Get details for a specific lost/found item.
-- `update_lost_found_item(item_id, item_data)`: Edit an existing lost/found item.
-- `delete_lost_found_item(item_id)`: Remove a lost/found item.
-
-### Marketplace Functions
-- `create_marketplace_item(item_data)`: Add a new marketplace item.
-- `get_marketplace_items(order_by=None, filters=None)`: List marketplace items with optional filters and sorting.
-- `get_marketplace_item(item_id)`: Get details for a specific marketplace item.
-- `update_marketplace_item(item_id, item_data)`: Edit an existing marketplace item.
-- `delete_marketplace_item(item_id)`: Remove a marketplace item.
-
-### Feedback Functions
-- `create_feedback(user_id, item_type, item_id, comment)`: Add a comment to a lost/found or marketplace item.
-- `get_feedback_for_item(item_type, item_id)`: List all comments for a specific item.
-
-### Category Functions
-- `get_categories(type=None)`: List all categories, or filter by type (lost_found or marketplace).
-
-### Utility Functions
-- `allowed_file(filename)`: Check if an uploaded file has an allowed image extension.
+All database operations and core logic are implemented in `models.py` using SQLAlchemy ORM. All image uploads are handled via Supabase Storage.
 
 ---
 
@@ -265,8 +228,8 @@ All database operations and core logic are implemented in `models.py`.
 
 ### 1. User Registration & Login
 - Register a new account or use the default admin:
-  - **Username:** `admin`
-  - **Password:** `admin123`
+  - Username: admin
+  - Password: admin123
 - Email verification is required — check your inbox for the confirmation link.
 - Log in to access both Lost & Found and Marketplace platforms.
 
@@ -282,37 +245,70 @@ All database operations and core logic are implemented in `models.py`.
 
 ### 4. Admin Dashboard
 - Log in as admin to access special utilities:
-  - **Reset Database:** Run `reset_db.py` to wipe and reinitialize tables (default users, categories, sample data).
-  - **Manage Users & Items:** Edit or delete any user, lost/found item, or marketplace item.
+  - Manage categories and users.
+  - Edit or delete any user, lost/found item, or marketplace item.
 
 ---
 
 ## Security & Best Practices
-
-- **Password Hashing:** SHA-256 is used to store passwords securely.
+- **Password Hashing:** Passwords are securely hashed using Werkzeug.
 - **Session Security:** Sessions are stored on the filesystem (Flask-Session) with a secret key.
 - **CSRF Protection:** Enabled via Flask-WTF for all forms.
 - **Image Uploads:**
   - Restricted to allowed extensions (png, jpg, jpeg, webp).
-  - Images are resized and compressed to reduce storage and load times.
-- **Email Verification:** SMTP credentials are kept in environment variables or `config.py` (do not commit real credentials).
-- **Configuration Management:** Use environment variables or a `.env` file (with python-dotenv) for sensitive data (e.g., `MAIL_PASSWORD`, `SECRET_KEY`).
+  - Images are uploaded directly to Supabase Storage.
+- **Email Verification:** SMTP credentials are kept in environment variables or `.env` (do not commit real credentials).
+- **Configuration Management:** Use environment variables or a `.env` file for sensitive data (e.g., SUPABASE_KEY, MAIL_PASSWORD, SECRET_KEY).
 
 ---
 
 ## Extending the App
-
 - **Add New Blueprints:** Create additional Flask blueprints for new features (e.g., Events, Forums).
 - **Extend Models & Templates:**
   - Add new fields or tables in `models.py` and update related templates.
   - Customize HTML/CSS in `templates/` and `static/`.
-- **Advanced Search & Analytics:** Integrate full-text search (e.g., Elasticsearch) or data analytics (e.g., integrate with Tableau).
+- **Advanced Search & Analytics:** Integrate full-text search or analytics tools.
 - **Notifications:** Add real-time notifications using WebSockets (Flask-SocketIO).
 - **REST API Endpoints:** Expose CRUD operations via a RESTful API (Flask-RESTful or Flask-API).
 
 ---
 
-## License
+## Dockerization & Deployment
 
-Campus Hub is provided for educational purposes. If you plan to redistribute or deploy this project, please add your own license (e.g., MIT, Apache 2.0) at the root of the repository.
+### Docker Build & Run
+
+1. **Build the Docker image:**
+   ```sh
+   docker build -t campus-hub .
+   ```
+2. **Run the container:**
+   ```sh
+   docker run --env-file .env -p 5000:5000 campus-hub
+   ```
+
+Or use Docker Compose:
+
+```sh
+docker-compose up --build
+```
+
+### Production Deployment (CI/CD)
+
+- This project includes a GitHub Actions workflow for CI/CD (`.github/workflows/deploy.yml`).
+- On every push to `main`, it will:
+  - Build and push the Docker image to DockerHub.
+  - Optionally deploy to your server via SSH (edit the workflow as needed).
+
+**Secrets required in your GitHub repo:**
+- `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` (for DockerHub push)
+- `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY` (for remote deploy)
+
+**On your server:**
+- Ensure Docker is installed and your `.env` file is present.
+- The workflow will pull the latest image and restart the container automatically.
+
+---
+
+## License
+MIT License
 

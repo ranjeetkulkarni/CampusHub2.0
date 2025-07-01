@@ -2,5 +2,9 @@ flask
 flask-login
 flask-session
 flask-mail
-pillow
 werkzeug
+python-dotenv
+sqlalchemy
+psycopg2-binary
+supabase
+

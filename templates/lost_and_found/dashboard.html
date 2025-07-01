@@ -234,7 +234,11 @@
         {% if items %}
           {% for item in items %}
             <div class="item-card" data-status="{{ item.status }}" data-priority="{{ item.priority }}" data-category="{{ item.category }}">
-              <img src="{{ url_for('static', filename=item.image_path[1:]) if item.image_path else '' }}" alt="Item Image">
+              {% if item.images and item.images|length > 0 %}
+                <img src="{{ item.images[0].image_url }}" alt="Item Image">
+              {% else %}
+                <img src="https://dummyimage.com/400x300/cccccc/000000.png&text=No+Image" alt="No Image">
+              {% endif %}
               <div class="card-body">
                 <span class="badge {{ 'bg-danger' if item.status=='lost' else 'bg-success' }}">
                   {{ item.status|capitalize }}

@@ -250,8 +250,11 @@
                  data-category="{{ item.category }}"
                  data-price="{{ item.price }}">
               <div class="price-tag">${{ "%.2f"|format(item.price) }}</div>
-              <img src="{{ item.image_path and url_for('static', filename=item.image_path[1:]) or '' }}"
-                   alt="Item Image">
+              {% if item.images and item.images|length > 0 %}
+                <img src="{{ item.images[0].image_url }}" alt="Item Image">
+              {% else %}
+                <img src="https://dummyimage.com/400x300/cccccc/000000.png&text=No+Image" alt="No Image">
+              {% endif %}
               <div class="card-body">
                 <span class="badge {{ item.status=='available' and 'bg-success' or 'bg-warning' }}">
                   {{ item.status|capitalize }}

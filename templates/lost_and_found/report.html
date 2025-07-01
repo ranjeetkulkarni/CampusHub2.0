@@ -74,7 +74,7 @@
   .form-select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+    box-shadow: 0 0 0 4px rgba(67, 97,238, 0.15);
   }
 
   /* Keep radios at normal size */
@@ -171,10 +171,10 @@
 
         <div class="form-group">
           <label for="category">Category</label>
-          <select id="category" name="category"
-                  class="form-select" required>
+          <select class="form-select" id="category" name="category" required>
+            <option value="" disabled selected>Select category</option>
             {% for category in categories %}
-              <option value="{{ category.name }}">{{ category.name|capitalize }}</option>
+              <option value="{{ category.name }}">{{ category.name }}</option>
             {% endfor %}
           </select>
         </div>
@@ -233,11 +233,11 @@
           <label for="image">Upload an Image</label>
           <div class="file-upload">
             <input type="file" id="image" name="image"
-                   accept="image/*" onchange="previewImage(this)" required>
+                   accept="image/png, image/jpeg, image/webp" onchange="previewImage(this)" required>
             <p>Click or drag file to this area to upload</p>
           </div>
           <div class="preview-container" id="previewContainer">
-            <img id="imagePreview" src="#" alt="Image Preview">
+            <img id="imagePreview" src="#" alt="Image Preview" style="display:none;">
           </div>
         </div>
 
@@ -257,13 +257,23 @@
     const c = document.getElementById('previewContainer');
     const img = document.getElementById('imagePreview');
     if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (!file.type.startsWith('image/')) {
+        img.style.display = 'none';
+        c.style.display = 'none';
+        img.src = '#';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = e => {
         img.src = e.target.result;
+        img.style.display = 'block';
         c.style.display = 'block';
       };
-      reader.readAsDataURL(input.files[0]);
+      reader.readAsDataURL(file);
     } else {
+      img.src = '#';
+      img.style.display = 'none';
       c.style.display = 'none';
     }
   }
