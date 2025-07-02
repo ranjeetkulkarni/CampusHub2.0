@@ -1,16 +1,55 @@
 # Campus Hub 2.0
 
-Campus Hub 2.0 is a modern, production-ready web application for campus communities, built with Flask, SQLAlchemy ORM, and Supabase (PostgreSQL for data, Supabase Storage for images). It provides two main platforms:
+Campus Hub 2.0 is a modern, production-grade web application for campus communities, built with Flask, SQLAlchemy ORM, and Supabase (PostgreSQL for data, Supabase Storage for images). It is designed with best practices for security, scalability, and maintainability, and is fully cloud-native and container-ready. The app is deployed on Render with automated CI/CD, secret management, and robust error handling.
 
+## Key Platforms
 - **Lost & Found:** Report, search, and manage lost or found items.
 - **Marketplace:** Post, browse, and manage items for sale or rent.
 
-The project includes user authentication, email verification, image uploads to Supabase Storage, feedback/comments, and admin utilities. All legacy SQLite, PIL, and local file upload logic have been removed for a fully cloud-native experience.
+## Industry-Grade Features
+- **Authentication & Authorization:**
+  - Secure registration and login with hashed passwords (Werkzeug)
+  - Email verification via Flask-Mail
+  - Role-based access control (admin, student, guest)
+  - Persistent sessions with Flask-Session
+- **Cloud-Native Storage:**
+  - PostgreSQL (Supabase) for all data
+  - Supabase Storage for all images (no local storage)
+- **Image Handling:**
+  - Direct upload to Supabase Storage
+  - Strict validation (PNG, JPG, JPEG, WEBP)
+  - Public URLs for images
+- **Feedback & Comments:**
+  - Users can comment and rate items on both platforms
+- **Admin Utilities:**
+  - Category management
+  - Default admin account (admin/admin123)
+  - User and item moderation
+- **Security:**
+  - Password hashing (Werkzeug)
+  - CSRF protection (Flask-WTF)
+  - Session security (Flask-Session, secret key)
+  - Email credentials and secrets managed via environment variables or Render Secret Files
+  - No sensitive data in codebase
+- **Error Handling:**
+  - Custom 404 and 500 error pages
+  - Logging for startup, DB connection, and errors
+- **Deployment:**
+  - Dockerized for local and cloud deployment
+  - Infrastructure-as-code with `render.yaml`
+  - Automated deployment to Render on every push
+  - Secret management and environment variables via Render dashboard
+- **Extensibility:**
+  - Modular Flask blueprints
+  - Easily add new features (e.g., events, forums, notifications)
+- **Documentation:**
+  - Well-structured, developer-friendly codebase
+  - Clear setup, configuration, and extension instructions
 
 ---
 
 ## Table of Contents
-- [Features](#features)
+- [Features](#industry-grade-features)
 - [Project Structure](#project-structure)
 - [Setup Instructions](#setup-instructions)
 - [Configuration](#configuration)
@@ -19,37 +58,8 @@ The project includes user authentication, email verification, image uploads to S
 - [Usage Guide](#usage-guide)
 - [Security & Best Practices](#security--best-practices)
 - [Extending the App](#extending-the-app)
-- [Dockerization & Deployment](#dockerization--deployment)
+- [Deployment](#deployment)
 - [License](#license)
-
----
-
-## Features
-
-### User Management
-- **Registration & Login:** Secure registration and login with hashed passwords (Werkzeug).
-- **Email Verification:** Users must verify their email via Flask-Mail before accessing both platforms.
-- **Roles:** Supports admin, student, and guest roles.
-- **Session Management:** Persistent sessions using Flask-Session.
-
-### Lost & Found Platform
-- **Add Lost/Found Items:** Users can report lost or found items with details, images (stored in Supabase), and location.
-- **Browse & Search:** Filter and sort items by category, status, and priority.
-- **Feedback/Comments:** Users can comment on items for more information.
-
-### Marketplace Platform
-- **Post for Sale/Rent:** Users can list items for sale or rent with price, description, and images (stored in Supabase).
-- **Browse & Search:** Filter and sort marketplace items by category, price, or condition.
-- **Feedback/Comments:** Users can comment on marketplace items to inquire or negotiate.
-
-### Admin Utilities
-- **Category Management:** Script to initialize default categories.
-- **Default Admin Account:** Pre-configured admin/admin123 for management and testing.
-
-### Image Handling
-- **Upload to Supabase Storage:** Images are uploaded directly to Supabase Storage buckets.
-- **Allowed Formats:** PNG, JPG, JPEG, WEBP.
-- **Image Validation:** Only valid image types are accepted.
 
 ---
 
@@ -220,7 +230,7 @@ All configuration values are managed in `.env` and `config.py`. Key settings inc
 ---
 
 ## Core Functionality
-All database operations and core logic are implemented in `models.py` using SQLAlchemy ORM. All image uploads are handled via Supabase Storage.
+All database operations and core logic are implemented in `models.py` using SQLAlchemy ORM. All image uploads are handled via Supabase Storage. The app is structured for maintainability and extensibility, following best practices for separation of concerns and modularity.
 
 ---
 
@@ -257,8 +267,10 @@ All database operations and core logic are implemented in `models.py` using SQLA
 - **Image Uploads:**
   - Restricted to allowed extensions (png, jpg, jpeg, webp).
   - Images are uploaded directly to Supabase Storage.
-- **Email Verification:** SMTP credentials are kept in environment variables or `.env` (do not commit real credentials).
-- **Configuration Management:** Use environment variables or a `.env` file for sensitive data (e.g., SUPABASE_KEY, MAIL_PASSWORD, SECRET_KEY).
+- **Email Verification:** SMTP credentials are kept in environment variables or `.env` (never committed).
+- **Configuration Management:** All sensitive data is managed via environment variables or Render Secret Files.
+- **Error Handling:** Custom error pages and logging for all critical operations.
+- **Cloud-Native Deployment:** Fully containerized, with automated deployment and secret management on Render.
 
 ---
 
@@ -273,39 +285,31 @@ All database operations and core logic are implemented in `models.py` using SQLA
 
 ---
 
-## Dockerization & Deployment
+## Deployment
 
-### Docker Build & Run
+### Render (Recommended)
+- **Cloud-native deployment** using [Render](https://render.com/), with infrastructure-as-code via `render.yaml`.
+- **Automated builds and deploys** on every push to the main branch.
+- **Secret management** via Render dashboard or Secret Files.
+- **Health checks** and logging via Render dashboard.
+- **Scalable and production-ready** out of the box.
 
-1. **Build the Docker image:**
-   ```sh
-   docker build -t campus-hub .
-   ```
-2. **Run the container:**
-   ```sh
-   docker run --env-file .env -p 5000:5000 campus-hub
-   ```
+#### Steps:
+1. Commit and push your code (including `render.yaml`) to GitHub.
+2. Create a new Web Service on Render and connect your repo.
+3. Set environment variables and/or upload your `.env` as a Secret File.
+4. Deploy and monitor via the Render dashboard.
 
-Or use Docker Compose:
-
-```sh
-docker-compose up --build
-```
-
-### Production Deployment (CI/CD)
-
-- This project includes a GitHub Actions workflow for CI/CD (`.github/workflows/deploy.yml`).
-- On every push to `main`, it will:
-  - Build and push the Docker image to DockerHub.
-  - Optionally deploy to your server via SSH (edit the workflow as needed).
-
-**Secrets required in your GitHub repo:**
-- `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` (for DockerHub push)
-- `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY` (for remote deploy)
-
-**On your server:**
-- Ensure Docker is installed and your `.env` file is present.
-- The workflow will pull the latest image and restart the container automatically.
+### Docker (Local/Other Cloud)
+- Build and run with Docker:
+  ```sh
+  docker build -t campus-hub .
+  docker run --env-file .env -p 5000:5000 campus-hub
+  ```
+- Or use Docker Compose:
+  ```sh
+  docker-compose up --build
+  ```
 
 ---
 
