@@ -96,7 +96,7 @@ Campus-Hub-2.0/
 
 ### 1. Clone the Repository
 ```sh
-git clone <your-repo-url>
+git clone <https://github.com/ranjeetkulkarni/CampusHub2.0>
 cd Campus-Hub-2.0
 ```
 
